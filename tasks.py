@@ -2,6 +2,7 @@ from robocorp import browser
 from robocorp.tasks import task
 
 from RPA.HTTP import HTTP
+from RPA.PDF import PDF
 
 import pandas as pd
 import time as t
@@ -22,9 +23,9 @@ def order_robots_from_RobotSpareBin():
     context_page =open_robot_order_website("https://robotsparebinindustries.com/#/robot-order")
     close_modal(context_page)
    
-    orders_data = download_orders_file("https://robotsparebinindustries.com/orders.csv","orders.csv")
-    for order in orders_data:
-        fill_form(context_page,order)
+    download_orders_file("https://robotsparebinindustries.com/orders.csv","orders.csv")
+    create_pdf_from_folder("ordered_robots","receipts.pdf")
+  
    
 
 
@@ -38,6 +39,7 @@ def download_orders_file(url_file, wb_name):
     df = pd.read_csv(wb_name)
     for i in range(len(df)):
         fill_form(df.iloc[i],i)
+        
     
 
 def close_modal(context_page: browser.Page):
@@ -67,5 +69,29 @@ def fill_form(order, i: int):
 def print_screen(screenshot_path: str):
     page = browser.page()
     page.screenshot(path=screenshot_path)
+
+def create_pdf_from_folder(folder_path: str, pdf_path: str):
+    import os
+    import glob
+    
+    pdf = PDF()
+    # Get all PNG files from the folder
+    png_files = glob.glob(os.path.join(folder_path, "*.png"))
+    
+    if png_files:
+        # Create PDF from all PNG files
+        pdf.open_pdf(pdf_path)
+        pdf.add_files_to_pdf(files=png_files, target_document=pdf_path)
+        pdf.save_pdf(pdf_path)
+        print(f"Created PDF with {len(png_files)} images")
+    else:
+        print("No PNG files found in the folder")
+
+
+
+
+
+
+
         
 
