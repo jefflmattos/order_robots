@@ -1,0 +1,4 @@
+rpaframework==30.0.2
+robocorp==3.0.0
+robocorp-browser==2.3.5
+pandas 
