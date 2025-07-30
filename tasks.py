@@ -7,7 +7,6 @@ import zipfile
 
 
 import pandas as pd
-import time as t
 
 @task
 def order_robots_from_RobotSpareBin():
