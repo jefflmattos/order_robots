@@ -3,6 +3,8 @@ from robocorp.tasks import task
 
 from RPA.HTTP import HTTP
 from RPA.PDF import PDF
+import zipfile
+
 
 import pandas as pd
 import time as t
@@ -16,15 +18,19 @@ def order_robots_from_RobotSpareBin():
     Embeds the screenshot of the robot to the PDF receipt.
     Creates ZIP archive of the receipts and the images.
     """
+    
     browser.configure(
         screenshot="only-on-failure",
-        headless=False
+        headless=True
     )
     context_page =open_robot_order_website("https://robotsparebinindustries.com/#/robot-order")
     close_modal(context_page)
    
     download_orders_file("https://robotsparebinindustries.com/orders.csv","orders.csv")
     create_pdf_from_folder("ordered_robots","receipts.pdf")
+    zip_folder("receipts.zip","receipts.pdf")
+   
+        
   
    
 
@@ -39,6 +45,7 @@ def download_orders_file(url_file, wb_name):
     df = pd.read_csv(wb_name)
     for i in range(len(df)):
         fill_form(df.iloc[i],i)
+        
         
     
 
@@ -55,16 +62,22 @@ def fill_form(order, i: int):
     context_page.get_by_placeholder("Enter the part number for the legs").fill(str(order["Legs"]))
     context_page.click("#preview")
     context_page.wait_for_selector("#robot-preview-image", state="visible")
-    print_screen(f"ordered_robots/screenshot_{i}.png")
+    
     context_page.click("#order")
     if context_page.is_visible(".alert-danger"):
-        context_page.click("#order")
+        while context_page.is_visible("#order"):
+            context_page.click("#order")       
+        print_screen(f"ordered_robots/screenshot_{i}.png")
         context_page.wait_for_selector("#order-another", state="visible")
         context_page.click("#order-another")
     else:
+        print_screen(f"ordered_robots/screenshot_{i}.png")
         context_page.wait_for_selector("#order-another", state="visible")
         context_page.click("#order-another")
-    context_page.click(".btn-dark")
+
+    if context_page.is_visible(".btn-dark"):
+        context_page.click(".btn-dark")
+   
     
 def print_screen(screenshot_path: str):
     page = browser.page()
@@ -87,6 +100,9 @@ def create_pdf_from_folder(folder_path: str, pdf_path: str):
     else:
         print("No PNG files found in the folder")
 
+def zip_folder(zip_name_with_extension: str, item_to_zip: str):
+    with zipfile.ZipFile(zip_name_with_extension,"w",compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.write(item_to_zip)
 
 
 
